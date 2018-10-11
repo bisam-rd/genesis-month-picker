@@ -210,13 +210,22 @@
         }
       }
 
+      convertDate(date) {
+          if(date===null) {
+            return null;
+          }
+             return moment(date).format("YYYY-MM-DD");
+          }
+
       __internalDateValueChanged(newValue, oldValue){
         if(newValue){
           this.dateField = this.getDateAsLocalizedString();
           this.yearField = this.internalDateValue.getFullYear();
+          this.dateValue = this.convertDate(newValue);
         } else {
           this.dateField='';
           this.yearField=new Date().getFullYear();
+          this.dateValue=null;
         }
         this.changeSelectedButtonStyle(newValue, oldValue);
       }
@@ -256,8 +265,8 @@
         return {
           dateValue: {
             type: String,
-            computed: 'convertDate(internalDateValue)',
-            notify: true
+            notify: true,
+            value: null
           },
           
           internalDateValue: {
@@ -504,13 +513,6 @@
           }
         }
       }
-
-        convertDate(date) {
-          if(date===null) {
-            return null;
-          }
-             return moment(date).format("YYYY-MM-DD");
-          }
     }
 
     window.customElements.define(GenesisMonthPicker.is, GenesisMonthPicker);
