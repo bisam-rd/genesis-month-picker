@@ -119,7 +119,7 @@
         Array.from(Array(12).keys()).forEach(v=>{
           let monthButton = document.createElement('vaadin-button');
           monthButton.addEventListener('click', e => {
-            this.internalDateValue = new Date(this.yearField, v+1, 0)
+            this.internal_date_value = new Date(this.yearField, v+1, 0)
           });
           monthButton.addEventListener('dblclick', e => {
             this.$.popOver.togglePopper();
@@ -147,8 +147,8 @@
         {
           this.yearField=new Date().getFullYear();
         } else {
-          if(this.internalDateValue!=null){
-            this.internalDateValue = new Date(this.yearField, this.internalDateValue.getMonth() + 1, 0);
+          if(this.internal_date_value!=null){
+            this.internal_date_value = new Date(this.yearField, this.internal_date_value.getMonth() + 1, 0);
           }
         }
       }
@@ -158,13 +158,13 @@
           let momentObject = moment(this.dateField, this.formats[this.locale].toUpperCase(),true);
            if(!momentObject.isValid())
            {
-             this.internalDateValue=null;
+             this.internal_date_value=null;
               this.dateField='';
           } else {
-            this.internalDateValue=this.toEndOfMonth(momentObject);
+            this.internal_date_value=this.toEndOfMonth(momentObject);
           }
         } else {
-          this.internalDateValue=null;
+          this.internal_date_value=null;
         }
       }
 
@@ -174,28 +174,28 @@
       }
 
       previousMonth(){
-        if(this.internalDateValue!=null) {
-          this.internalDateValue = new Date(this.internalDateValue.getFullYear(), this.internalDateValue.getMonth(), 0);
+        if(this.internal_date_value!=null) {
+          this.internal_date_value = new Date(this.internal_date_value.getFullYear(), this.internal_date_value.getMonth(), 0);
         }
       }
 
       nextMonth(){
-        if(this.internalDateValue!=null) {
-          this.internalDateValue = new Date(this.internalDateValue.getFullYear(), this.internalDateValue.getMonth() + 2, 0);
+        if(this.internal_date_value!=null) {
+          this.internal_date_value = new Date(this.internal_date_value.getFullYear(), this.internal_date_value.getMonth() + 2, 0);
         }
       }
 
       previousYear(){
-        if(this.internalDateValue!=null){
-          this.internalDateValue = new Date(this.internalDateValue.getFullYear() - 1, this.internalDateValue.getMonth() + 1, 0);
+        if(this.internal_date_value!=null){
+          this.internal_date_value = new Date(this.internal_date_value.getFullYear() - 1, this.internal_date_value.getMonth() + 1, 0);
         } else {
           this.yearField--;
         }
       }
 
       nextYear(){
-        if(this.internalDateValue!=null){
-          this.internalDateValue = new Date(this.internalDateValue.getFullYear() + 1, this.internalDateValue.getMonth() + 1, 0);
+        if(this.internal_date_value!=null){
+          this.internal_date_value = new Date(this.internal_date_value.getFullYear() + 1, this.internal_date_value.getMonth() + 1, 0);
         } else {
           this.yearField++;
         }
@@ -204,28 +204,19 @@
       setDateValue(valueAsString){
         let momentObject = moment(valueAsString, "YYYY-MM-DD", true);
         if(valueAsString && momentObject.isValid()) {
-          this.internalDateValue = new Date(momentObject.year(), momentObject.month()+1, 0);
+          this.internal_date_value = new Date(momentObject.year(), momentObject.month()+1, 0);
         } else {
-          this.internalDateValue = null;
+          this.internal_date_value = null;
         }
       }
 
-      convertDate(date) {
-          if(date===null) {
-            return null;
-          }
-             return moment(date).format("YYYY-MM-DD");
-          }
-
-      __internalDateValueChanged(newValue, oldValue){
+      __internal_date_valueChanged(newValue, oldValue){
         if(newValue){
           this.dateField = this.getDateAsLocalizedString();
-          this.yearField = this.internalDateValue.getFullYear();
-          this.dateValue = this.convertDate(newValue);
+          this.yearField = this.internal_date_value.getFullYear();
         } else {
           this.dateField='';
           this.yearField=new Date().getFullYear();
-          this.dateValue=null;
         }
         this.changeSelectedButtonStyle(newValue, oldValue);
       }
@@ -250,10 +241,10 @@
       }  
 
       getDateAsLocalizedString(){
-        if(this.internalDateValue==null) {
+        if(this.internal_date_value==null) {
           return '';
         }
-        return this.internalDateValue.toLocaleDateString(this.locale);
+        return this.internal_date_value.toLocaleDateString(this.locale);
       }
 
       getLocalizedMonthName(monthNum){
@@ -263,15 +254,15 @@
     
       static get properties() {
         return {
-          dateValue: {
+          date_value: {
             type: String,
-            notify: true,
-            value: null
+            computed: 'convertDate(internal_date_value)',
+            notify: true
           },
           
-          internalDateValue: {
+          internal_date_value: {
             type: Date,
-            observer: '__internalDateValueChanged',
+            observer: '__internal_date_valueChanged',
             value: null
           },
 
@@ -513,6 +504,13 @@
           }
         }
       }
+
+        convertDate(date) {
+          if(date===null) {
+            return null;
+          }
+             return moment(date).format("YYYY-MM-DD");
+          }
     }
 
     window.customElements.define(GenesisMonthPicker.is, GenesisMonthPicker);
