@@ -60,34 +60,49 @@
         max-height: 15px;
       }
 
+      [part="calendar-icon"] {
+        cursor: default;
+      }
+
       #calendar vaadin-button {
         min-width: calc(var(--lumo-button-size) * 2.5);
       }
 
     </style>
-    <div id="month-picker">
-      <genesis-popover placement="bottom-start" id="popOver">
-          <span>
-            <vaadin-text-field id="dateField" placeholder="Date" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid"> <!-- prevent-invalid-input pattern="\d*/*\d*/*\d*/*" -->
-              <iron-icon icon="vaadin:calendar" slot="suffix"></iron-icon><!--on-click="update"--> 
-            </vaadin-text-field>
-          </span>
-          <div slot="content" part="content-slot">
-              <div part="column-slot">
-                  <div part="year-field">
-                      <iron-icon icon="vaadin:caret-left" on-click="previousYear"></iron-icon>
-                      <vaadin-text-field id="yearField" prevent-invalid-input pattern="\d*" value="{{yearField}}" theme="align-center" on-blur="checkYearFieldValid"></vaadin-text-field>
-                      <iron-icon icon="vaadin:caret-right" on-click="nextYear"></iron-icon>
-                  </div>
-                  <div id="calendar"></div>
-              </div>
-          </div>
-        </genesis-popover>
-      <div part="arrows">
-          <iron-icon icon="vaadin:caret-up" on-click="nextMonth"></iron-icon>
-          <iron-icon icon="vaadin:caret-down" on-click="previousMonth"></iron-icon>
+      <template is="dom-if" if="[[!read_only]]" id="non_readonly_template_id">
+        <div id="month-picker">
+          <genesis-popover placement="bottom-start" id="popOver">
+            <span id="emitter">
+                <vaadin-text-field id="dateField" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
+                <iron-icon part="calendar-icon" on-click="toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
+              </vaadin-text-field>
+            </span>
+            <div slot="content" part="content-slot">
+                <div part="column-slot">
+                    <div part="year-field">
+                        <iron-icon icon="vaadin:caret-left" on-click="previousYear"></iron-icon>
+                        <vaadin-text-field id="yearField" prevent-invalid-input pattern="\d*" value="{{yearField}}" theme="align-center" on-blur="checkYearFieldValid" on-keypress="yearFieldKeyPress"></vaadin-text-field>
+                        <iron-icon icon="vaadin:caret-right" on-click="nextYear"></iron-icon>
+                    </div>
+                    <div id="calendar"></div>
+                </div>
+            </div>
+          </genesis-popover>
+          <div part="arrows">
+              <iron-icon icon="vaadin:caret-up" on-click="nextMonth"></iron-icon>
+              <iron-icon icon="vaadin:caret-down" on-click="previousMonth"></iron-icon>
+          </div>    
       </div>
-    </div>
+          </div>    
+        </div>
+      </template>
+      <template is="dom-if" if="[[read_only]]">
+        <div id="month-picker">
+          <span id="emitter">
+            <vaadin-text-field id="dateField" placeholder="Date" readonly value="[[dateField]]"/>
+          </span>
+        </div>
+      </template>
   </template>
 
   <script>
@@ -111,7 +126,13 @@
 
       ready() {
         super.ready();
-        this.createCalendarDOM();
+        if(!this.read_only)
+        {
+          Polymer.Async.microTask.run( () => {
+            this.createCalendarDOM();
+            });
+        }
+        this.__setDateValue(this.date_value);
       }
 
       initAndStoreButtonsMap(){  
@@ -124,6 +145,7 @@
           monthButton.addEventListener('dblclick', e => {
             this.$.popOver.togglePopper();
           });
+          
           monthButton.setAttribute("theme","small");
           this.buttonsMap.set(v, monthButton);
         });
@@ -135,11 +157,11 @@
           if (key%3 == 0){
             currentMonthsRow = document.createElement('div');
             currentMonthsRow.setAttribute("part","months_row");
-            this.$.calendar.appendChild(currentMonthsRow);
+            this.shadowRoot.querySelector("#calendar").appendChild(currentMonthsRow);
           }
           currentMonthsRow.appendChild(value);
         });
-        this.$.calendar.appendChild(currentMonthsRow);
+        this.shadowRoot.querySelector("#calendar").appendChild(currentMonthsRow);
       }
 
       checkYearFieldValid(){
@@ -166,6 +188,34 @@
         } else {
           this.internal_date_value=null;
         }
+      }
+    
+      dateFieldKeyPress(event) {
+        if(event.key==="Enter")
+        {
+          this.shadowRoot.querySelector('#dateField').blur();
+        }
+      }
+      
+      yearFieldKeyPress(event) {
+        if(event.key==="Enter")
+        {
+          this.shadowRoot.querySelector('#yearField').blur();
+          this.shadowRoot.querySelector('#popOver').togglePopper();  
+        }
+      }
+      
+      toggleAndSelect()
+      {
+        this.shadowRoot.querySelector('#popOver').togglePopper();     
+        
+        // Noooope, Internal Structure access is Evil ! 👿
+        // this.shadowRoot.querySelector('#dateField').shadowRoot.querySelector('input').select();
+      }
+      
+      toggle()
+      {
+        this.shadowRoot.querySelector('#popOver').togglePopper();        
       }
 
       toEndOfMonth(moment)
@@ -201,7 +251,7 @@
         }
       }
 
-      setDateValue(valueAsString){
+      __setDateValue(valueAsString){
         let momentObject = moment(valueAsString, "YYYY-MM-DD", true);
         if(valueAsString && momentObject.isValid()) {
           this.internal_date_value = new Date(momentObject.year(), momentObject.month()+1, 0);
@@ -217,8 +267,23 @@
         } else {
           this.dateField='';
           this.yearField=new Date().getFullYear();
+          this.date_value=null;
         }
+        this.date_value=this.__convertDate(this.internal_date_value);
         this.changeSelectedButtonStyle(newValue, oldValue);
+      }
+
+      __convertDate(date) {
+          if(date===null) {
+            return null;
+          }
+             return moment(date).format("YYYY-MM-DD");
+          }
+
+      __date_valueChanged(newValue, oldValue){
+        if(newValue && newValue!=oldValue){
+          this.__setDateValue(newValue);
+        }
       }
 
       _localeChanged(newValue, oldValue){
@@ -256,8 +321,19 @@
         return {
           date_value: {
             type: String,
-            computed: 'convertDate(internal_date_value)',
+            observer: '__date_valueChanged',
             notify: true
+          },
+
+          read_only: {
+            type: Boolean,
+            reflectToAttribute: true,
+            value: false
+          },
+
+          read_only_date: {
+            type: String,
+            value: null
           },
           
           internal_date_value: {
@@ -504,13 +580,6 @@
           }
         }
       }
-
-        convertDate(date) {
-          if(date===null) {
-            return null;
-          }
-             return moment(date).format("YYYY-MM-DD");
-          }
     }
 
     window.customElements.define(GenesisMonthPicker.is, GenesisMonthPicker);
