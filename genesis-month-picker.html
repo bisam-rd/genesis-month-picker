@@ -53,7 +53,8 @@
       [part="arrows"] {
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-end;
+        padding: var(--lumo-space-s) 0;
       }
 
       [part="arrows"] * {
@@ -73,7 +74,7 @@
         <div id="month-picker">
           <genesis-popover placement="bottom-start" id="popOver">
             <span id="emitter">
-                <vaadin-text-field id="dateField" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
+                <vaadin-text-field id="dateField" label="[[label]]" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
                 <iron-icon part="calendar-icon" on-click="toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
               </vaadin-text-field>
             </span>
@@ -329,6 +330,11 @@
           date_value: {
             type: String,
             observer: '__date_valueChanged',
+            notify: true
+          },
+
+          label: {
+            type: String,
             notify: true
           },
 
