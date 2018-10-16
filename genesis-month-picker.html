@@ -53,8 +53,8 @@
       [part="arrows"] {
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
-        padding: var(--lumo-space-s) 0;
+        justify-content: center;
+        /* padding: var(--lumo-space-s) 0; */
       }
 
       [part="arrows"] * {
@@ -65,6 +65,14 @@
         cursor: default;
       }
 
+      [part="caret-left"] {
+        cursor: default;
+      }
+
+      [part="caret-right"] {
+        cursor: default;
+      }
+
       #calendar vaadin-button {
         min-width: calc(var(--lumo-button-size) * 2.5);
       }
@@ -72,10 +80,13 @@
     </style>
       <template is="dom-if" if="[[!read_only]]" id="non_readonly_template_id">
         <div id="month-picker">
+           
           <genesis-popover placement="bottom-start" id="popOver">
             <span id="emitter">
                 <vaadin-text-field id="dateField" label="[[label]]" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
-                <iron-icon part="calendar-icon" on-click="toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
+                    <iron-icon part="caret-left" icon="vaadin:caret-left" on-click="previousMonth" slot="suffix"></iron-icon>
+                    <iron-icon part="calendar-icon" on-click="toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
+                    <iron-icon part="caret-right" icon="vaadin:caret-right" on-click="nextMonth" slot="suffix"></iron-icon>
               </vaadin-text-field>
             </span>
             <div slot="content" part="content-slot">
@@ -89,10 +100,6 @@
                 </div>
             </div>
           </genesis-popover>
-          <div part="arrows">
-              <iron-icon icon="vaadin:caret-up" on-click="nextMonth"></iron-icon>
-              <iron-icon icon="vaadin:caret-down" on-click="previousMonth"></iron-icon>
-          </div>    
       </div>
           </div>    
         </div>
