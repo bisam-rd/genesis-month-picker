@@ -23,6 +23,11 @@
         flex-direction: row;
       }
 
+      .flexComponent {
+        display: flex;
+        flex: 1;
+      }
+
       [part="column-slot"] {
         display: flex;
         flex-direction: column;
@@ -79,11 +84,11 @@
 
     </style>
       <template is="dom-if" if="[[!read_only]]" id="non_readonly_template_id">
-        <div id="month-picker">
+        <div id="month-picker" class="flexComponent">
            
-          <genesis-popover placement="bottom-start" id="popOver">
-            <span id="emitter">
-                <vaadin-text-field id="dateField" label="[[label]]" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
+          <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent" >
+            <span id="emitter" class="flexComponent" >
+                <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
                     <iron-icon part="caret-left" icon="vaadin:caret-left" on-click="previousMonth" slot="suffix"></iron-icon>
                     <iron-icon part="calendar-icon" on-click="toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
                     <iron-icon part="caret-right" icon="vaadin:caret-right" on-click="nextMonth" slot="suffix"></iron-icon>
@@ -367,6 +372,11 @@
             reflectToAttribute: true,
             observer: '_localeChanged',
             notify: true
+          },
+          
+          placement :{
+            type: String,
+            value: 'bottom-start'
           },
           
           dateField: {
