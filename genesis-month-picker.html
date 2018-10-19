@@ -89,17 +89,17 @@
           <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent" >
             <span id="emitter" class="flexComponent" >
                 <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
-                    <iron-icon part="caret-left" icon="vaadin:caret-left" on-click="previousMonth" slot="suffix"></iron-icon>
+                    <iron-icon part="caret-left" icon="vaadin:caret-left" id="previousMonthIcon" on-click="previousMonth" slot="suffix"></iron-icon>
                     <iron-icon part="calendar-icon" on-click="toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
-                    <iron-icon part="caret-right" icon="vaadin:caret-right" on-click="nextMonth" slot="suffix"></iron-icon>
+                    <iron-icon part="caret-right" icon="vaadin:caret-right" id="nextMonthIcon" on-click="nextMonth" slot="suffix"></iron-icon>
               </vaadin-text-field>
             </span>
             <div slot="content" part="content-slot">
                 <div part="column-slot">
                     <div part="year-field">
-                        <iron-icon icon="vaadin:caret-left" on-click="previousYear"></iron-icon>
+                        <iron-icon icon="vaadin:caret-left" id="previousYearIcon" on-click="previousYear"></iron-icon>
                         <vaadin-text-field id="yearField" prevent-invalid-input pattern="\d*" value="{{yearField}}" theme="align-center" on-blur="checkYearFieldValid" on-keypress="yearFieldKeyPress"></vaadin-text-field>
-                        <iron-icon icon="vaadin:caret-right" on-click="nextYear"></iron-icon>
+                        <iron-icon icon="vaadin:caret-right" id="nextYearIcon" on-click="nextYear"></iron-icon>
                     </div>
                     <div id="calendar"></div>
                 </div>
@@ -182,11 +182,11 @@
         {
           this.yearField=new Date().getFullYear();
         } else {
-          if(this.yearField<this.min_date) {
-            this.yearField=this.min_date;
+          if(this.yearField<this.min_supported_year) {
+            this.yearField=this.min_supported_year;
           }
-          if(this.yearField>this.max_date) {
-            this.yearField=this.max_date;
+          if(this.yearField>this.max_supported_year) {
+            this.yearField=this.max_supported_year;
           }
           if(this.internal_date_value!=null){
             this.internal_date_value = new Date(this.yearField, this.internal_date_value.getMonth() + 1, 0);
@@ -202,10 +202,12 @@
              this.internal_date_value=null;
               this.dateField='';
           } else {
-            if(momentObject.year()<this.min_date){
-              momentObject.set('year', this.min_date);
-            }else if(momentObject.year()>this.max_date){
-              momentObject.set('year', this.max_date);
+            if(momentObject.year()<this.min_supported_year){
+              momentObject.set('year', this.min_supported_year);
+              momentObject.set('month', 0);
+            }else if(momentObject.year()>this.max_supported_year){
+              momentObject.set('year', this.max_supported_year);
+              momentObject.set('month', 11);
             }
             this.internal_date_value=this.toEndOfMonth(momentObject);
           }
@@ -260,20 +262,20 @@
       }
 
       previousYear(){
-        if(this.internal_date_value!=null){
+        if(this.internal_date_value!=null && this.internal_date_value.getFullYear()>this.min_supported_year){
           this.internal_date_value = new Date(this.internal_date_value.getFullYear() - 1, this.internal_date_value.getMonth() + 1, 0);
         } else {
-          if(this.yearField>this.min_date){
+          if(this.yearField>this.min_supported_year){
             this.yearField--;
           }
         }
       }
 
       nextYear(){
-        if(this.internal_date_value!=null){
+        if(this.internal_date_value!=null  && this.internal_date_value.getFullYear()<this.max_supported_year){
           this.internal_date_value = new Date(this.internal_date_value.getFullYear() + 1, this.internal_date_value.getMonth() + 1, 0);
         } else {
-          if(this.yearField<this.max_date){
+          if(this.yearField<this.max_supported_year){
             this.yearField++;
           }
         }
@@ -381,15 +383,26 @@
             observer: '__internal_date_valueChanged'
           },
 
-          max_date: {
+          max_supported_year: {
             type: Number,
             value: moment("2199-01-01", "YYYY-MM-DD", true).year()
           },
           
-          min_date: {
+          min_supported_year: {
             type: Number,
             value: moment("1900-01-01", "YYYY-MM-DD", true).year()
           },
+
+          min_date_value: {
+            type: String,
+            value: null
+          },
+
+          max_date_value: {
+            type: String,
+            value: null
+          },
+          
           locale: {
             type: String,
             value: 'fr-FR',
