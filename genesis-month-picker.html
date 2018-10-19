@@ -182,6 +182,12 @@
         {
           this.yearField=new Date().getFullYear();
         } else {
+          if(this.yearField<this.min_date) {
+            this.yearField=this.min_date;
+          }
+          if(this.yearField>this.max_date) {
+            this.yearField=this.max_date;
+          }
           if(this.internal_date_value!=null){
             this.internal_date_value = new Date(this.yearField, this.internal_date_value.getMonth() + 1, 0);
           }
@@ -196,6 +202,11 @@
              this.internal_date_value=null;
               this.dateField='';
           } else {
+            if(momentObject.year()<this.min_date){
+              momentObject.set('year', this.min_date);
+            }else if(momentObject.year()>this.max_date){
+              momentObject.set('year', this.max_date);
+            }
             this.internal_date_value=this.toEndOfMonth(momentObject);
           }
         } else {
@@ -252,7 +263,9 @@
         if(this.internal_date_value!=null){
           this.internal_date_value = new Date(this.internal_date_value.getFullYear() - 1, this.internal_date_value.getMonth() + 1, 0);
         } else {
-          this.yearField--;
+          if(this.yearField>this.min_date){
+            this.yearField--;
+          }
         }
       }
 
@@ -260,7 +273,9 @@
         if(this.internal_date_value!=null){
           this.internal_date_value = new Date(this.internal_date_value.getFullYear() + 1, this.internal_date_value.getMonth() + 1, 0);
         } else {
-          this.yearField++;
+          if(this.yearField<this.max_date){
+            this.yearField++;
+          }
         }
       }
 
@@ -281,7 +296,7 @@
         }
       }
       __internal_date_valueChanged(newValue, oldValue){
-        if(newValue){
+        if(newValue && ! isNaN(newValue.getTime())){
           this.dateField = this.getDateAsLocalizedString();
           this.yearField = this.internal_date_value.getFullYear();
         } else {
@@ -316,11 +331,11 @@
       }
 
       changeSelectedButtonStyle(newValue, oldValue){
-        if(oldValue){
+        if(oldValue && ! isNaN(oldValue.getTime())){
           this.buttonsMap.get(oldValue.getMonth()).setAttribute("theme", "small");
         }
 
-        if(newValue){
+        if(newValue && ! isNaN(newValue.getTime())){
           this.buttonsMap.get(newValue.getMonth()).setAttribute("theme", "primary small");
         }
       }  
@@ -366,6 +381,15 @@
             observer: '__internal_date_valueChanged'
           },
 
+          max_date: {
+            type: Number,
+            value: moment("2199-01-01", "YYYY-MM-DD", true).year()
+          },
+          
+          min_date: {
+            type: Number,
+            value: moment("1900-01-01", "YYYY-MM-DD", true).year()
+          },
           locale: {
             type: String,
             value: 'fr-FR',
