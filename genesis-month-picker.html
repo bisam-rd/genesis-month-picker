@@ -88,7 +88,7 @@
            
           <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent" >
             <span id="emitter" class="flexComponent" >
-                <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="checkFieldValid" on-keypress="dateFieldKeyPress">
+                <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date" on-click="toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="__checkFieldValid" on-keypress="dateFieldKeyPress">
                     <iron-icon part="caret-left" icon="vaadin:caret-left" id="previousMonthIcon" on-click="previousMonth" slot="suffix"></iron-icon>
                     <iron-icon part="calendar-icon" on-click="toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
                     <iron-icon part="caret-right" icon="vaadin:caret-right" id="nextMonthIcon" on-click="nextMonth" slot="suffix"></iron-icon>
@@ -98,7 +98,7 @@
                 <div part="column-slot">
                     <div part="year-field">
                         <iron-icon icon="vaadin:caret-left" id="previousYearIcon" on-click="previousYear"></iron-icon>
-                        <vaadin-text-field id="yearField" prevent-invalid-input pattern="\d*" value="{{yearField}}" theme="align-center" on-blur="checkYearFieldValid" on-keypress="yearFieldKeyPress"></vaadin-text-field>
+                        <vaadin-text-field id="yearField" prevent-invalid-input pattern="\d*" value="{{yearField}}" theme="align-center"></vaadin-text-field>
                         <iron-icon icon="vaadin:caret-right" id="nextYearIcon" on-click="nextYear"></iron-icon>
                     </div>
                     <div id="calendar"></div>
@@ -146,6 +146,7 @@
             });
         }
         this.__setDateValue(this.date_value);
+        this.applyMinMaxDatesValue();
       }
 
       initAndStoreButtonsMap(){  
@@ -153,9 +154,7 @@
         Array.from(Array(12).keys()).forEach(v=>{
           let monthButton = document.createElement('vaadin-button');
           monthButton.addEventListener('click', e => {
-            this.internal_date_value = new Date(this.yearField, v+1, 0)
-          });
-          monthButton.addEventListener('dblclick', e => {
+            this.internal_date_value = new Date(this.yearField, v+1, 0);
             this.shadowRoot.querySelector("#popOver").togglePopper();
           });
           
@@ -177,41 +176,37 @@
         this.shadowRoot.querySelector("#calendar").appendChild(currentMonthsRow);
       }
 
-      checkYearFieldValid(){
-        if(!this.yearField)
-        {
-          this.yearField=new Date().getFullYear();
-        } else {
-          if(this.yearField<this.min_supported_year) {
-            this.yearField=this.min_supported_year;
-          }
-          if(this.yearField>this.max_supported_year) {
-            this.yearField=this.max_supported_year;
-          }
-          if(this.internal_date_value!=null){
-            this.internal_date_value = new Date(this.yearField, this.internal_date_value.getMonth() + 1, 0);
-          }
-        }
-      }
-
-      checkFieldValid() {
+      __checkFieldValid() {
         if(this.dateField){
           let momentObject = moment(this.dateField, this.formats[this.locale].toUpperCase(),true);
            if(!momentObject.isValid())
            {
              this.internal_date_value=null;
               this.dateField='';
-          } else {
-            if(momentObject.year()<this.min_supported_year){
-              momentObject.set('year', this.min_supported_year);
-              momentObject.set('month', 0);
-            }else if(momentObject.year()>this.max_supported_year){
-              momentObject.set('year', this.max_supported_year);
-              momentObject.set('month', 11);
-            }
-            this.internal_date_value=this.toEndOfMonth(momentObject);
           }
-        } else {
+          else
+          {
+            if(this.__isDateInvalidForMinMax(momentObject)){
+              this.internal_date_value=null;
+              this.dateField='';
+            }
+            else {
+
+              if(momentObject.isBefore(this.min_supported_date))
+              {
+                momentObject=this.min_supported_date;
+              }
+              else if(momentObject.isAfter(this.max_supported_date))
+              {
+                momentObject=this.max_supported_date;
+              }
+
+              this.internal_date_value=this.toEndOfMonth(momentObject);
+            }            
+          }
+        }
+        else
+        {
           this.internal_date_value=null;
         }
       }
@@ -223,14 +218,13 @@
         }
       }
       
-      yearFieldKeyPress(event) {
-        if(event.key==="Enter")
-        {
-          this.shadowRoot.querySelector('#yearField').blur();
-          this.shadowRoot.querySelector('#popOver').togglePopper();  
+      __yearField_changed(newValue, oldValue)
+      {
+        if(newValue.length==4){
+          this.applyMinMaxDatesValue();
         }
       }
-      
+
       toggleAndSelect()
       {
         this.shadowRoot.querySelector('#popOver').togglePopper();     
@@ -251,36 +245,36 @@
 
       previousMonth(){
         if(this.internal_date_value!=null) {
-          this.internal_date_value = new Date(this.internal_date_value.getFullYear(), this.internal_date_value.getMonth(), 0);
+          let previousMonthDate=new Date(this.internal_date_value.getFullYear(), this.internal_date_value.getMonth(), 0);
+          if(!this.__isDateInvalidForMinMax(moment(previousMonthDate))) {
+            this.internal_date_value = previousMonthDate;
+          }
         }
       }
 
       nextMonth(){
         if(this.internal_date_value!=null) {
-          this.internal_date_value = new Date(this.internal_date_value.getFullYear(), this.internal_date_value.getMonth() + 2, 0);
+          let nextMonthDate=new Date(this.internal_date_value.getFullYear(), this.internal_date_value.getMonth()+2, 0);
+          if(!this.__isDateInvalidForMinMax(moment(nextMonthDate))) {
+            this.internal_date_value = nextMonthDate;
+          }
         }
       }
 
       previousYear(){
-        if(this.internal_date_value!=null && this.internal_date_value.getFullYear()>this.min_supported_year){
-          this.internal_date_value = new Date(this.internal_date_value.getFullYear() - 1, this.internal_date_value.getMonth() + 1, 0);
-        } else {
-          if(this.yearField>this.min_supported_year){
-            this.yearField--;
-          }
+        if(this.yearField>this.min_supported_date.year()){
+          this.yearField--;
+          this.applyMinMaxDatesValue();
         }
       }
 
       nextYear(){
-        if(this.internal_date_value!=null  && this.internal_date_value.getFullYear()<this.max_supported_year){
-          this.internal_date_value = new Date(this.internal_date_value.getFullYear() + 1, this.internal_date_value.getMonth() + 1, 0);
-        } else {
-          if(this.yearField<this.max_supported_year){
-            this.yearField++;
-          }
+        if(this.yearField<this.max_supported_date.year()){
+          this.yearField++;
+          this.applyMinMaxDatesValue();
         }
       }
-
+      
       __setDateValue(valueAsString){
         let momentObject = moment(valueAsString, "YYYY-MM-DD", true);
         if(valueAsString && momentObject.isValid()) {
@@ -308,6 +302,7 @@
         }
         this.date_value=this.__convertDate(this.internal_date_value);
         this.changeSelectedButtonStyle(newValue, oldValue);
+        this.applyMinMaxDatesValue();
       }
 
       __convertDate(date) {
@@ -330,6 +325,40 @@
           value.textContent=this.getLocalizedMonthName(key);        
         });
         }
+      }
+
+      applyMinMaxDatesValue(){
+        this.buttonsMap.forEach((value, key) => {
+          if(this.__isDateInvalidForMinMax(moment(new Date(this.yearField, key+1, 0)))){
+            value.setAttribute('disabled', 'true');
+          } else {
+            value.removeAttribute('disabled');
+          }
+        });
+      }
+
+      __isDateInvalidForMinMax(dateToValidate){
+        let minDate = moment(this.min_date_value, "YYYY-MM-DD", true);
+        let maxDate = moment(this.max_date_value, "YYYY-MM-DD", true);
+        
+        let disableButtonFromMin=false;
+        let disableButtonFromMax=false;
+        if(this.min_date_value && minDate.isValid()) {
+          if(dateToValidate.isBefore(minDate)){
+            disableButtonFromMin=true;
+          } else {
+            disableButtonFromMin=false;
+          };
+        }
+        if(this.max_date_value && maxDate.isValid()) {
+          if(moment(dateToValidate).isAfter(maxDate)){
+            disableButtonFromMax=true;
+          } else {
+            disableButtonFromMax=false;
+          };
+        }
+
+        return disableButtonFromMax||disableButtonFromMin;
       }
 
       changeSelectedButtonStyle(newValue, oldValue){
@@ -383,16 +412,6 @@
             observer: '__internal_date_valueChanged'
           },
 
-          max_supported_year: {
-            type: Number,
-            value: moment("2199-01-01", "YYYY-MM-DD", true).year()
-          },
-          
-          min_supported_year: {
-            type: Number,
-            value: moment("1900-01-01", "YYYY-MM-DD", true).year()
-          },
-
           min_date_value: {
             type: String,
             value: null
@@ -421,12 +440,23 @@
           },
 
           yearField: {
-            type: String
+            type: String,
+            observer: '__yearField_changed',
           },
 
           buttonsMap: {
             type: Map
           },
+
+          max_supported_date: {
+             type: Number,
+             value: moment("2199-12-31", "YYYY-MM-DD", true)
+           },
+           
+          min_supported_date: {
+             type: Number,
+             value: moment("1900-01-01", "YYYY-MM-DD", true)
+           },
 
           formats: {
             type : Object,
