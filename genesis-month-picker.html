@@ -186,23 +186,7 @@
           }
           else
           {
-            if(this.__isDateInvalidForMinMax(momentObject)){
-              this.internal_date_value=null;
-              this.dateField='';
-            }
-            else {
-
-              if(momentObject.isBefore(this.min_supported_date))
-              {
-                momentObject=this.min_supported_date;
-              }
-              else if(momentObject.isAfter(this.max_supported_date))
-              {
-                momentObject=this.max_supported_date;
-              }
-
-              this.internal_date_value=this.toEndOfMonth(momentObject);
-            }            
+            this.internal_date_value=this.toEndOfMonth(this.adjustedForMinMax(momentObject));
           }
         }
         else
@@ -222,6 +206,8 @@
       {
         if(newValue.length==4){
           this.applyMinMaxDatesValue();
+        } else {
+          this.disableAllMonths();
         }
       }
 
@@ -337,29 +323,71 @@
         });
       }
 
-      __isDateInvalidForMinMax(dateToValidate){
+      disableAllMonths(){
+        this.buttonsMap.forEach((value, key) => {
+            value.setAttribute('disabled', 'true');
+        });
+      }
+
+
+      __minDate(){
+        let minSupportedDate = moment(this.min_supported_date, "YYYY-MM-DD", true);
         let minDate = moment(this.min_date_value, "YYYY-MM-DD", true);
-        let maxDate = moment(this.max_date_value, "YYYY-MM-DD", true);
         
-        let disableButtonFromMin=false;
-        let disableButtonFromMax=false;
-        if(this.min_date_value && minDate.isValid()) {
-          if(dateToValidate.isBefore(minDate)){
-            disableButtonFromMin=true;
-          } else {
-            disableButtonFromMin=false;
-          };
-        }
-        if(this.max_date_value && maxDate.isValid()) {
-          if(moment(dateToValidate).isAfter(maxDate)){
-            disableButtonFromMax=true;
-          } else {
-            disableButtonFromMax=false;
-          };
+        if(this.min_date_value!=null && minDate.isValid()) {
+          return minDate;
         }
 
+        return minSupportedDate;
+      }
+
+      __maxDate(){
+        let maxSupportedDate = moment(this.max_supported_date, "YYYY-MM-DD", true);
+        let maxDate = moment(this.max_date_value, "YYYY-MM-DD", true);
+        
+        if(this.max_date_value!=null && maxDate.isValid()) {
+          return maxDate;
+        }
+        
+        return maxSupportedDate;
+      }
+
+      __isDateInvalidForMinMax(dateToValidate){
+        let disableButtonFromMin=false;
+        let disableButtonFromMax=false;
+        
+        if(dateToValidate.isBefore(this.__minDate())){
+          disableButtonFromMin=true;
+        } else {
+          disableButtonFromMin=false;
+        };
+        
+        if(dateToValidate.isAfter(this.__maxDate())){
+          disableButtonFromMax=true;
+        } else {
+          disableButtonFromMax=false;
+        };
+        
         return disableButtonFromMax||disableButtonFromMin;
       }
+      
+      adjustedForMinMax(dateToAdjust)
+      {
+        if(this.__isDateInvalidForMinMax(dateToAdjust))
+        {
+          if(dateToAdjust.isBefore(this.__minDate()))
+          {
+            return this.__minDate();
+          }
+          else if(dateToAdjust.isAfter(this.__maxDate()))
+          {
+            return this.__maxDate();
+          }
+        } else {
+          return dateToAdjust;
+        }    
+      }
+
 
       changeSelectedButtonStyle(newValue, oldValue){
         if(oldValue && ! isNaN(oldValue.getTime())){
