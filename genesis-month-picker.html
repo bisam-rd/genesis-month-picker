@@ -143,17 +143,32 @@
 
         this.__setDateValue(this.date_value);
         this.__applyMinMaxDatesValue();
+        // if(this.opened){
+        //     this.__doAfterWaitUntilAccessible(() => this.__toggleAndSelect());        
+        //   }
       }
 
       connectedCallback() {
           super.connectedCallback();
-          Polymer.Async.microTask.run( () => {
-            if(this.opened){
-               this.__toggleAndSelect();
-            }
-          });
-        
-        }
+          console.log("connected callback");
+          if(this.opened && !this.opening_in_progress){
+            this.opening_in_progress=true;
+            this.__doAfterWaitUntilAccessible(() => this.__toggleAndSelect());        
+          }
+      }
+
+      __doAfterWaitUntilAccessible(supplier){
+             Polymer.Async.microTask.run( () => {
+              if(!this.shadowRoot.querySelector('#popOver'))
+              {
+                this.__doAfterWaitUntilAccessible(supplier);
+              } else {
+                this.opening_in_progress=false;
+                supplier();
+              }
+             });
+      }
+
 
       __initAndStoreButtonsMap(){  
         this.buttonsMap = new Map();
@@ -485,6 +500,11 @@
             notify: true
           },
           
+          opening_in_progress: {
+            type: Boolean,
+            value: false
+          },
+
           __loaded :{
             type:Boolean,
             value: false
