@@ -12,6 +12,8 @@
     <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
     <link rel="import" href="../genesis-month-picker.html">
     <link rel="import" href="../../vaadin-dialog/vaadin-dialog.html">
+    <link rel="import" href="../../vaadin-text-field/vaadin-text-field.html">
+    <link rel="import" href="../../vaadin-button/vaadin-button.html">
 
     <custom-style>
       <style is="custom-style" include="demo-pages-shared-styles">
@@ -29,9 +31,22 @@
       <h3>genesis-month-picker demo in a Dialog</h3>
       <demo-snippet>
         <template>          
-            <vaadin-dialog opened>
+            <vaadin-button onclick="document.getElementById('myDialog').setAttribute('opened',false); document.getElementById('myDialog').setAttribute('opened',true);">Open a Dialog</vaadin-button>
+            <vaadin-dialog id="myDialog">
                 <template>
-                    <genesis-month-picker locale="en-US" date_value="2012-10-10" /></genesis-month-picker>
+                  <div>
+                      <genesis-month-picker locale="en-US" date_value="2012-10-10" /></genesis-month-picker>
+                      <genesis-month-picker locale="en-US" date_value="2012-10-10" opened /></genesis-month-picker>
+                  </div>
+                  <div>
+                    <vaadin-text-field label="Date of birth" placeholder="Date"></vaadin-text-field>
+                  </div>
+                  <div>
+                    <vaadin-text-field label="Country" placeholder="Country"></vaadin-text-field>
+                  </div>
+                  <div>
+                    <vaadin-text-field label="City" placeholder="City"></vaadin-text-field>
+                  </div>
                 </template>
               </vaadin-dialog>
         </template>

@@ -141,27 +141,19 @@
       ready() {
         super.ready();
 
-        if(!this.read_only)
-        {
-
-       //   Polymer.Async.microTask.run( () => {
-       //     this.__createCalendarDOM();
-       //     });
-        }
         this.__setDateValue(this.date_value);
         this.__applyMinMaxDatesValue();
-
-        if(this.opened)
-        {
-              Polymer.Async.microTask.run( () => {
-                this.__loaded=true;
-                this.__createCalendarDOM();
-                this.shadowRoot.querySelector("#popOver").togglePopper();
-              });
-          
-        }
-
       }
+
+      connectedCallback() {
+          super.connectedCallback();
+          Polymer.Async.microTask.run( () => {
+            if(this.opened){
+               this.__toggleAndSelect();
+            }
+          });
+        
+        }
 
       __initAndStoreButtonsMap(){  
         this.buttonsMap = new Map();
@@ -443,12 +435,6 @@
     
       static get properties() {
         return {
-          opened: {
-            type: Boolean,
-            reflectToAttribute: true,
-            value: false                    
-          },
-
           date_value: {
             type: String,
             observer: '__date_valueChanged',
@@ -458,6 +444,11 @@
           label: {
             type: String,
             notify: true
+          },
+
+          opened: {
+            type: Boolean,
+            value: false
           },
 
           read_only: {
