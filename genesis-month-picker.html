@@ -86,7 +86,7 @@
       <template is="dom-if" if="[[!read_only]]" id="non_readonly_template_id">
         <div id="month-picker" class="flexComponent">
            
-          <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent" >
+          <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent">
             <span id="emitter" class="flexComponent" >
                 <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date" on-click="__toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="__checkFieldValid" on-keypress="__dateFieldKeyPress">
                     <iron-icon part="caret-left" icon="vaadin:caret-left" id="previousMonthIcon" on-click="__previousMonth" slot="suffix"></iron-icon>
@@ -150,6 +150,17 @@
         }
         this.__setDateValue(this.date_value);
         this.__applyMinMaxDatesValue();
+
+        if(this.opened)
+        {
+              Polymer.Async.microTask.run( () => {
+                this.__loaded=true;
+                this.__createCalendarDOM();
+                this.shadowRoot.querySelector("#popOver").togglePopper();
+              });
+          
+        }
+
       }
 
       __initAndStoreButtonsMap(){  
@@ -432,6 +443,12 @@
     
       static get properties() {
         return {
+          opened: {
+            type: Boolean,
+            reflectToAttribute: true,
+            value: false                    
+          },
+
           date_value: {
             type: String,
             observer: '__date_valueChanged',
