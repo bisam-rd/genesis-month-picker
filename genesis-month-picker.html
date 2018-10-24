@@ -329,12 +329,22 @@
           } else {
             value.removeAttribute('disabled');
           }
+
+          if(this.internal_date_value!=null && this.internal_date_value.getMonth()==key && this.internal_date_value.getFullYear()==this.yearField)
+          {
+            value.setAttribute("theme", "primary small");
+          } 
+          else {
+            value.setAttribute("theme", "small");
+          }
+
         });
       }
 
       __disableAllMonths(){
         this.buttonsMap.forEach((value, key) => {
             value.setAttribute('disabled', 'true');
+            value.setAttribute("theme", "small");
         });
       }
 
