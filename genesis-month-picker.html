@@ -135,15 +135,18 @@
       constructor(){
         super();
         this.__initAndStoreButtonsMap();
+        this.calendar
       }
 
       ready() {
         super.ready();
+
         if(!this.read_only)
         {
-          Polymer.Async.microTask.run( () => {
-            this.__createCalendarDOM();
-            });
+
+       //   Polymer.Async.microTask.run( () => {
+       //     this.__createCalendarDOM();
+       //     });
         }
         this.__setDateValue(this.date_value);
         this.__applyMinMaxDatesValue();
@@ -213,8 +216,14 @@
 
       __toggleAndSelect()
       {
+        
         this.shadowRoot.querySelector('#popOver').togglePopper();     
         
+        if(!this.__loaded){
+          this.__loaded=true;
+          this.__createCalendarDOM();
+        }
+
         // Noooope, Internal Structure access is Evil !
         // this.shadowRoot.querySelector('#dateField').shadowRoot.querySelector('input').select();
       }
@@ -272,9 +281,9 @@
 
       __read_onlyChanged(newValue, oldValue){
         if(oldValue==true && newValue==false){
-          Polymer.Async.microTask.run( () => {
+          //Polymer.Async.microTask.run( () => {
             this.__createCalendarDOM();
-            });
+          //  });
         }
       }
       __internal_date_valueChanged(newValue, oldValue){
@@ -458,6 +467,11 @@
             notify: true
           },
           
+          __loaded :{
+            type:Boolean,
+            value: false
+          },
+
           placement :{
             type: String,
             value: 'bottom-start'
