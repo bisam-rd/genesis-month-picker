@@ -41,6 +41,23 @@
             <vaadin-dialog id="myDialog">
                 <template>
                   <div>
+                      <genesis-month-picker locale="en-US" date_value="2012-10-10" /></genesis-month-picker>
+                  </div>
+                  <div>
+                    <vaadin-text-field label="Date of birth" placeholder="Date"></vaadin-text-field>
+                  </div>
+                  <div>
+                    <vaadin-text-field label="Country" placeholder="Country"></vaadin-text-field>
+                  </div>
+                  <div>
+                    <vaadin-text-field label="City" placeholder="City"></vaadin-text-field>
+                  </div>
+                </template>
+            </vaadin-dialog>
+            <vaadin-button onclick="document.getElementById('myDialogWithMPOpen').setAttribute('opened',false); document.getElementById('myDialogWithMPOpen').setAttribute('opened',true);">Open a Dialog with a monthpicker set to opened by default</vaadin-button>
+            <vaadin-dialog id="myDialogWithMPOpen">
+                <template>
+                  <div>
                       <genesis-month-picker locale="en-US" date_value="2012-10-10" opened /></genesis-month-picker>
                   </div>
                   <div>
