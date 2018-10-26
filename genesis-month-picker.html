@@ -161,7 +161,14 @@
           console.log("connected callback");
           if(this.opened && !this.opening_in_progress){
             this.opening_in_progress=true;
-            this.__doAfterWaitUntilAccessible(() => this.__toggleAndSelect());        
+            this.__doAfterWaitUntilAccessible(() => {
+              
+              this.shadowRoot.querySelector('#popOver').addEventListener('popper-closed', 
+              e=> {
+                    this.dispatchEvent(new CustomEvent('popper-closed', { closed: true}));             
+              });
+              this.__toggleAndSelect();
+            });        
           }
       }
 
