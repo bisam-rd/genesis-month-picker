@@ -10,15 +10,14 @@
 <dom-module id="genesis-month-picker">
   <template>
     <style>
-      genesis-popover {   
+      genesis-popover {
         --genesis-popover-margin:0px;
         --genesis-popover-max-width:230px;
 
         --flex-display-mixin : {
           display: flex;
-          flex:1;  
+          flex:1;
         };
-       
       }
 
 
@@ -37,6 +36,10 @@
       .flexComponent {
         display: flex;
         flex: 1;
+      }
+
+      [part="content-slot"]:focus {
+        outline: none;
       }
 
       [part="column-slot"] {
@@ -96,20 +99,21 @@
     </style>
       <template is="dom-if" if="[[!read_only]]" id="non_readonly_template_id">
         <div id="month-picker" class="flexComponent">
-           
-          <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent">
-            <span id="emitter" class="flexComponent" >
-                <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date" on-click="__toggleAndSelect" locale="[[locale]]" value="{{dateField}}" on-blur="__checkFieldValid" on-keypress="__dateFieldKeyPress">
-                    <iron-icon part="caret-left" icon="vaadin:caret-left" id="previousMonthIcon" on-click="__previousMonth" slot="suffix"></iron-icon>
-                    <iron-icon part="calendar-icon" on-click="__toggle" icon="vaadin:calendar" slot="suffix"></iron-icon>
-                    <iron-icon part="caret-right" icon="vaadin:caret-right" id="nextMonthIcon" on-click="__nextMonth" slot="suffix"></iron-icon>
+
+          <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent" ignore_auto_close>
+            <span id="emitter" class="flexComponent">
+                <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date"
+                    on-focus="__dateField_focus" on-click="__buildCalendarIfNeeded" locale="[[locale]]" value="{{dateField}}" on-blur="__checkFieldValid" on-keypress="__dateFieldKeyPress">
+                    <iron-icon part="caret-left" icon="vaadin:caret-left" id="previousMonthIcon" on-click="__previousMonth" slot="suffix" popover-ignore="true"></iron-icon>
+                    <iron-icon part="calendar-icon" icon="vaadin:calendar" slot="suffix"></iron-icon>
+                    <iron-icon part="caret-right" icon="vaadin:caret-right" id="nextMonthIcon" on-click="__nextMonth" slot="suffix" popover-ignore="true"></iron-icon>
               </vaadin-text-field>
             </span>
-            <div slot="content" part="content-slot">
+            <div slot="content" part="content-slot" id="popOverContent" tabindex="-1">
                 <div part="column-slot">
                     <div part="year-field">
                         <iron-icon icon="vaadin:caret-left" id="previousYearIcon" on-click="__previousYear"></iron-icon>
-                        <vaadin-text-field id="yearField" prevent-invalid-input pattern="\d*" value="{{yearField}}" theme="align-center"></vaadin-text-field>
+                        <vaadin-text-field id="yearField" prevent-invalid-input pattern="\d*" value="{{yearField}}" theme="align-center" tabindex="-1"></vaadin-text-field>
                         <iron-icon icon="vaadin:caret-right" id="nextYearIcon" on-click="__nextYear"></iron-icon>
                     </div>
                     <div id="calendar"></div>
@@ -117,7 +121,7 @@
             </div>
           </genesis-popover>
       </div>
-          </div>    
+          </div>
         </div>
       </template>
       <template is="dom-if" if="[[read_only]]">
@@ -142,7 +146,7 @@
      Polymer.Element {
 
       static get is() { return 'genesis-month-picker'; }
-  
+
       constructor(){
         super();
         this.__initAndStoreButtonsMap();
@@ -151,41 +155,160 @@
 
       ready() {
         super.ready();
-
         this.__setDateValue(this.date_value);
         this.__applyMinMaxDatesValue();
-      }
 
-      connectedCallback() {
-          super.connectedCallback();
-          console.log("connected callback");
-          if(this.opened && !this.opening_in_progress){
+        if(!this.opening_in_progress){
             this.opening_in_progress=true;
-            this.__doAfterWaitUntilAccessible(() => {
-              
-              this.shadowRoot.querySelector('#popOver').addEventListener('popper-closed', 
-              e=> {
-                    this.dispatchEvent(new CustomEvent('popper-closed', { closed: true}));             
-              });
-              this.__toggleAndSelect();
-            });        
+
+             if(!this.read_only){
+              this.__waitUntil_DomIf_Loaded();
+            }
           }
+
       }
 
-      __doAfterWaitUntilAccessible(supplier){
-             Polymer.Async.microTask.run( () => {
-              if(!this.shadowRoot.querySelector('#popOver'))
-              {
-                this.__doAfterWaitUntilAccessible(supplier);
-              } else {
-                this.opening_in_progress=false;
-                supplier();
+      __waitUntil_DomIf_Loaded(){
+        Polymer.Async.microTask.run( () => {
+          if(!this.shadowRoot.querySelector('#popOver'))
+          {
+            this.__waitUntil_DomIf_Loaded();
+          } else {
+            this.opening_in_progress=false;
+            let popoverElement=this.shadowRoot.querySelector('#popOver');
+
+            this.shadowRoot.querySelector("#dateField").addEventListener('keydown',
+              e=> {
+                    if(e.key==='ArrowDown')
+                    {
+                      e.preventDefault();
+                      this.__buildCalendarIfNeeded();
+                      if(!popoverElement.hasAttribute("pressed"))
+                      {
+                        this.__toggle();
+                      } else {
+                        this.shadowRoot.querySelector("#popOverContent").focus();
+                      }
+                    }
+                  }
+            );
+
+
+            this.shadowRoot.querySelector("#popOverContent").addEventListener('keydown',
+              e=> {
+                if(e.key==='ArrowLeft')
+                {
+                  this.__updateCalendarFrom(
+                    12,
+                    ()=>this.__previousYear(),
+                    ()=>this.__previousMonth(),
+                    e);
+                } else if(e.key==='ArrowRight')
+                {
+                  this.__updateCalendarFrom(
+                    1,
+                    ()=>this.__nextYear(),
+                    ()=>this.__nextMonth(),
+                    e);
+                } else if(e.key==='ArrowUp')
+                {
+                  this.__updateCalendarFrom(
+                    12,
+                    ()=>{},
+                    ()=>{ this.__previousMonth(); this.__previousMonth(); this.__previousMonth(); } ,
+                    e);
+                } else if(e.key==='ArrowDown')
+                {
+                  this.__updateCalendarFrom(
+                    1,
+                    ()=>{},
+                    ()=>{ this.__nextMonth(); this.__nextMonth(); this.__nextMonth(); } ,
+                    e);
+                } else if(e.key==='Enter')
+                {
+                  this.__toggle();
+                }
               }
-             });
+            );
+
+            popoverElement.addEventListener('popper-closed',
+              e=> {
+                    if(this.windowClickHandler) {
+                      document.removeEventListener("click", this.windowClickHandler, true);
+                    }
+
+                    this.dispatchEvent(new CustomEvent('popper-closed', { closed: true}));
+              }
+            );
+
+            popoverElement.addEventListener('popper-opened',
+              e=> {
+
+                    this.shadowRoot.querySelector("#popOverContent").focus();
+
+                    var that=this;
+
+                    document.addEventListener("click", windowClick, true);
+                    function windowClick(event) {
+
+                      if(that!==event.target.closest("genesis-month-picker"))
+                      {
+                        popoverElement.togglePopper();
+                      }
+                    }
+
+                    this.windowClickHandler=windowClick;
+                    this.dispatchEvent(new CustomEvent('popper-opened', { opened: true}));
+                });
+
+            if(this.opened){
+                this.__buildCalendarIfNeeded();
+                popoverElement.togglePopper();
+            }
+          }
+        });
       }
 
+      __dateField_focus(){
+        if(this.shadowRoot.querySelector('#popOver').hasAttribute("pressed"))
+        {
+          this.__toggle();
+        }
+      }
 
-      __initAndStoreButtonsMap(){  
+      __updateCalendarFrom(from, yearChange, monthChange, event){
+        event.preventDefault();
+        if(event.shiftKey)
+        {
+          yearChange();
+          if(this.internal_date_value!=null){
+            this.__adjustInternalDateFrom(new Date(this.yearField, this.internal_date_value.getMonth()+1, 0));
+          }
+        } else {
+          if(this.internal_date_value!=null){
+            monthChange();
+          } else {
+           this.__adjustInternalDateFrom(new Date(this.yearField, from, 0));
+          }
+        }
+      }
+
+      __adjustInternalDateFrom(date){
+        let momentDate=moment(date);
+        if(this.__isDateInvalidForMinMax(momentDate)){
+          if(this.__isDateInvalidForMinMax(moment(this.__toEndOfMonth(this.__adjustedForMinMax(momentDate)))))
+          {
+            let date=this.__toEndOfMonth(this.__adjustedForMinMax(momentDate));
+            date.setMonth(date.getMonth()-1);
+            this.internal_date_value = date;
+          } else {
+            this.internal_date_value = this.__toEndOfMonth(this.__adjustedForMinMax(momentDate));
+          }
+        } else {
+          this.internal_date_value = date;
+        }
+      }
+      __initAndStoreButtonsMap(){
         this.buttonsMap = new Map();
         Array.from(Array(12).keys()).forEach(v=>{
           let monthButton = document.createElement('vaadin-button');
@@ -193,12 +316,13 @@
             this.internal_date_value = new Date(this.yearField, v+1, 0);
             this.shadowRoot.querySelector("#popOver").togglePopper();
           });
-          
+
           monthButton.setAttribute("theme","small");
+          monthButton.setAttribute("tabindex", "-1");
           this.buttonsMap.set(v, monthButton);
         });
       }
-      
+
       __createCalendarDOM(){
         let currentMonthsRow;
         this.buttonsMap.forEach((value, key) => {
@@ -230,14 +354,14 @@
           this.internal_date_value=null;
         }
       }
-    
+
       __dateFieldKeyPress(event) {
         if(event.key==="Enter")
         {
           this.shadowRoot.querySelector('#dateField').blur();
         }
       }
-      
+
       __yearField_changed(newValue, oldValue)
       {
         if(newValue.length==4){
@@ -247,11 +371,9 @@
         }
       }
 
-      __toggleAndSelect()
+      __buildCalendarIfNeeded()
       {
-        
-        this.shadowRoot.querySelector('#popOver').togglePopper();     
-        
+
         if(!this.__loaded){
           this.__loaded=true;
           this.__createCalendarDOM();
@@ -260,10 +382,10 @@
         // Noooope, Internal Structure access is Evil !
         // this.shadowRoot.querySelector('#dateField').shadowRoot.querySelector('input').select();
       }
-      
+
       __toggle()
       {
-        this.shadowRoot.querySelector('#popOver').togglePopper();        
+        this.shadowRoot.querySelector('#popOver').togglePopper();
       }
 
       __toEndOfMonth(moment)
@@ -302,7 +424,7 @@
           this.__applyMinMaxDatesValue();
         }
       }
-      
+
       __setDateValue(valueAsString){
         let momentObject = moment(valueAsString, "YYYY-MM-DD", true);
         if(valueAsString && momentObject.isValid()) {
@@ -350,7 +472,7 @@
         if(newValue!=oldValue){
           this.dateField = this.getDateAsLocalizedString();
           this.buttonsMap.forEach((value, key) => {
-          value.textContent=this.getLocalizedMonthName(key);        
+          value.textContent=this.getLocalizedMonthName(key);
         });
         }
       }
@@ -366,7 +488,7 @@
           if(this.internal_date_value!=null && this.internal_date_value.getMonth()==key && this.internal_date_value.getFullYear()==this.yearField)
           {
             value.setAttribute("theme", "primary small");
-          } 
+          }
           else {
             value.setAttribute("theme", "small");
           }
@@ -385,7 +507,7 @@
       __minDate(){
         let minSupportedDate = moment(this.min_supported_date, "YYYY-MM-DD", true);
         let minDate = moment(this.min_date_value, "YYYY-MM-DD", true);
-        
+
         if(this.min_date_value!=null && minDate.isValid()) {
           return minDate;
         }
@@ -396,33 +518,33 @@
       __maxDate(){
         let maxSupportedDate = moment(this.max_supported_date, "YYYY-MM-DD", true);
         let maxDate = moment(this.max_date_value, "YYYY-MM-DD", true);
-        
+
         if(this.max_date_value!=null && maxDate.isValid()) {
           return maxDate;
         }
-        
+
         return maxSupportedDate;
       }
 
       __isDateInvalidForMinMax(dateToValidate){
         let disableButtonFromMin=false;
         let disableButtonFromMax=false;
-        
+
         if(dateToValidate.isBefore(this.__minDate())){
           disableButtonFromMin=true;
         } else {
           disableButtonFromMin=false;
         };
-        
+
         if(dateToValidate.isAfter(this.__maxDate())){
           disableButtonFromMax=true;
         } else {
           disableButtonFromMax=false;
         };
-        
+
         return disableButtonFromMax||disableButtonFromMin;
       }
-      
+
       __adjustedForMinMax(dateToAdjust)
       {
         if(this.__isDateInvalidForMinMax(dateToAdjust))
@@ -437,7 +559,7 @@
           }
         } else {
           return dateToAdjust;
-        }    
+        }
       }
 
 
@@ -449,7 +571,7 @@
         if(newValue && ! isNaN(newValue.getTime())){
           this.buttonsMap.get(newValue.getMonth()).setAttribute("theme", "primary small");
         }
-      }  
+      }
 
       getDateAsLocalizedString(){
         if(this.internal_date_value==null) {
@@ -462,7 +584,7 @@
         let monthName = new Date(2000, monthNum, 1).toLocaleDateString(this.locale, {month:'short'});
         return monthName.charAt(0).toUpperCase()+monthName.substring(1);
       }
-    
+
       static get properties() {
         return {
           date_value: {
@@ -491,7 +613,7 @@
           read_only_date: {
             type: String
           },
-          
+
           internal_date_value: {
             type: Date,
             observer: '__internal_date_valueChanged'
@@ -506,7 +628,7 @@
             type: String,
             value: null
           },
-          
+
           locale: {
             type: String,
             value: 'fr-FR',
@@ -514,7 +636,7 @@
             observer: '_localeChanged',
             notify: true
           },
-          
+
           opening_in_progress: {
             type: Boolean,
             value: false
@@ -529,7 +651,7 @@
             type: String,
             value: 'bottom-start'
           },
-          
+
           dateField: {
             type: String
           },
@@ -547,7 +669,7 @@
              type: Number,
              value: moment("2199-12-31", "YYYY-MM-DD", true)
            },
-           
+
           min_supported_date: {
              type: Number,
              value: moment("1900-01-01", "YYYY-MM-DD", true)
