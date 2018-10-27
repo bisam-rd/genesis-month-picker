@@ -158,13 +158,9 @@
         this.__setDateValue(this.date_value);
         this.__applyMinMaxDatesValue();
 
-        if(!this.opening_in_progress){
-            this.opening_in_progress=true;
-
-             if(!this.read_only){
-              this.__waitUntil_DomIf_Loaded();
-            }
-          }
+        if(!this.read_only){
+          this.__waitUntil_DomIf_Loaded();
+        }
 
       }
 
@@ -174,7 +170,6 @@
           {
             this.__waitUntil_DomIf_Loaded();
           } else {
-            this.opening_in_progress=false;
             let popoverElement=this.shadowRoot.querySelector('#popOver');
 
             this.shadowRoot.querySelector("#dateField").addEventListener('keydown',
@@ -281,11 +276,8 @@
         if(event.shiftKey)
         {
           yearChange();
-          if(this.internal_date_value!=null){
-            this.__adjustInternalDateFrom(new Date(this.yearField, this.internal_date_value.getMonth()+1, 0));
-          }
         } else {
-          if(this.internal_date_value!=null){
+          if(this.internal_date_value!=null && this.internal_date_value.getFullYear()===this.yearField){
             monthChange();
           } else {
            this.__adjustInternalDateFrom(new Date(this.yearField, from, 0));
@@ -635,11 +627,6 @@
             reflectToAttribute: true,
             observer: '_localeChanged',
             notify: true
-          },
-
-          opening_in_progress: {
-            type: Boolean,
-            value: false
           },
 
           __loaded :{
