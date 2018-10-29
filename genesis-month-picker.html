@@ -265,6 +265,12 @@
         });
       }
 
+      focus(){
+        Polymer.Async.microTask.run( () => {
+          this.shadowRoot.querySelector('#dateField').focus();
+        });
+      }
+
       __dateField_focus(){
         if(this.shadowRoot.querySelector('#popOver').hasAttribute("pressed"))
         {
@@ -345,7 +351,7 @@
         else
         {
           this.internal_date_value=null;
-        }
+        }      
       }
 
       __dateFieldKeyPress(event) {
