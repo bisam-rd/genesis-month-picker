@@ -103,7 +103,8 @@
           <genesis-popover placement="[[placement]]" id="popOver" class="flexComponent" ignore_auto_close>
             <span id="emitter" class="flexComponent">
                 <vaadin-text-field class="flexComponent" id="dateField" label="[[label]]" placeholder="Date"
-                    on-focus="__dateField_focus" on-click="__buildCalendarIfNeeded" locale="[[locale]]" value="{{dateField}}" on-blur="__checkFieldValid" on-keypress="__dateFieldKeyPress">
+                    on-focus="__dateField_focus" on-click="__buildCalendarIfNeeded" locale="[[locale]]" value="{{dateField}}" on-blur="__checkFieldValid" on-keypress="__dateFieldKeyPress"
+                    popover-ignore="true">
                     <iron-icon part="caret-left" icon="vaadin:caret-left" id="previousMonthIcon" on-click="__previousMonth" slot="suffix" popover-ignore="true"></iron-icon>
                     <iron-icon part="calendar-icon" icon="vaadin:calendar" slot="suffix"></iron-icon>
                     <iron-icon part="caret-right" icon="vaadin:caret-right" id="nextMonthIcon" on-click="__nextMonth" slot="suffix" popover-ignore="true"></iron-icon>
