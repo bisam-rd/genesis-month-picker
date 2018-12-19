@@ -4,7 +4,9 @@ The Genesis Month Picker is a component that allows to navigate quickly between 
 
 ## Install the Polymer-CLI
 
-First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) installed. Then run `polymer serve` to serve your element locally.
+First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) installed. <br/>
+Run `polymer install` to init your environment. <br/>
+Run `polymer serve` to serve your element locally.
 
 ## Viewing Your Element
 

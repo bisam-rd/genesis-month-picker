@@ -100,6 +100,22 @@
           assert.equal(element.date_value, null);
         });
 
+        test('Updating backing value to null should clear the date field', () => {
+            const element = fixture('FrenchTestFixture');
+            Polymer.dom.flush();
+            const elementShadowRoot = element.shadowRoot;
+            const monthPicker = elementShadowRoot.querySelector('#genesisMonthPicker');
+
+            //GIVEN
+            element.date_value = '2018-12-20';
+
+            //WHEN
+            element.__date_valueChanged(null, element.date_value);
+
+            //THEN
+            assert.equal(element.date_value, null);
+        });
+
         test('Setting the date value not to end of month should set the date field to end of month and readjust the value to end of month', () => {
           const element = fixture('FrenchTestFixture');
           Polymer.dom.flush();
