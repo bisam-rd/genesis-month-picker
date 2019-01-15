@@ -6,6 +6,7 @@
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../vaadin-icons/vaadin-icons.html">
 <script src="../moment/min/moment.min.js"></script>
+<script src="../moment/locale/fr.js"></script>
 
 <dom-module id="genesis-month-picker">
   <template>
@@ -126,8 +127,6 @@
           </div>
         </genesis-popover>
       </div>
-      </div>
-      </div>
     </template>
     <template is="dom-if" if="[[read_only]]">
       <div id="month-picker" class="flexComponent">
@@ -140,6 +139,10 @@
   </template>
 
   <script>
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.substring(1);
+    }
+
     /**
      * `genesis-month-picker`
      * The Genesis Month Picker is a component that allows to navigate quickly between months to select an end month date.
@@ -157,7 +160,6 @@
       constructor() {
         super();
         this.__initAndStoreButtonsMap();
-        this.calendar
       }
 
       ready() {
@@ -191,7 +193,6 @@
                 }
               }
             );
-
 
             this.shadowRoot.querySelector("#popOverContent").addEventListener('keydown',
               e => {
@@ -235,8 +236,7 @@
               }
             );
 
-            popoverElement.addEventListener('popper-closed',
-              e => {
+            popoverElement.addEventListener('popper-closed', e => {
                 if (this.windowClickHandler) {
                   document.removeEventListener("click", this.windowClickHandler, true);
                 }
@@ -245,25 +245,24 @@
               }
             );
 
-            popoverElement.addEventListener('popper-opened',
-              e => {
+            popoverElement.addEventListener('popper-opened', e => {
 
-                this.shadowRoot.querySelector("#popOverContent").focus();
+              this.shadowRoot.querySelector("#popOverContent").focus();
 
-                var that = this;
+              let that = this;
 
-                document.addEventListener("click", windowClick, true);
+              document.addEventListener("click", windowClick, true);
 
-                function windowClick(event) {
+              function windowClick(event) {
 
-                  if (that !== event.target.closest("genesis-month-picker")) {
-                    popoverElement.togglePopper();
-                  }
+                if (that !== event.target.closest("genesis-month-picker")) {
+                  popoverElement.togglePopper();
                 }
+              }
 
-                this.windowClickHandler = windowClick;
-                this.dispatchEvent(new CustomEvent('popper-opened', {opened: true}));
-              });
+              this.windowClickHandler = windowClick;
+              this.dispatchEvent(new CustomEvent('popper-opened', {opened: true}));
+            });
 
             if (this.opened) {
               this.__buildCalendarIfNeeded();
@@ -343,7 +342,8 @@
 
       __checkFieldValid() {
         if (this.dateField) {
-          let momentObject = moment(this.dateField, this.formats[this.locale].toUpperCase(), true);
+          let format = this.formats[this.locale] || this.formats["en-US"];
+          let momentObject = moment(this.dateField, format.toUpperCase(), true);
           if (!momentObject.isValid()) {
             this.internal_date_value = null;
             this.dateField = '';
@@ -468,7 +468,6 @@
 
       _localeChanged(newValue, oldValue) {
         if (newValue != oldValue) {
-          moment.locale(newValue);
           this.dateField = this.getDateAsLocalizedString();
           this.buttonsMap.forEach((value, key) => {
             value.textContent = this.getLocalizedMonthName(key);
@@ -525,35 +524,20 @@
       }
 
       __isDateInvalidForMinMax(dateToValidate) {
-        let disableButtonFromMin = false;
-        let disableButtonFromMax = false;
-
-        if (dateToValidate.isBefore(this.__minDate())) {
-          disableButtonFromMin = true;
-        } else {
-          disableButtonFromMin = false;
-        }
-
-        if (dateToValidate.isAfter(this.__maxDate())) {
-          disableButtonFromMax = true;
-        } else {
-          disableButtonFromMax = false;
-        }
+        let disableButtonFromMin = dateToValidate.isBefore(this.__minDate());
+        let disableButtonFromMax = dateToValidate.isAfter(this.__maxDate());
 
         return disableButtonFromMax || disableButtonFromMin;
       }
 
       __adjustedForMinMax(dateToAdjust) {
-        if (this.__isDateInvalidForMinMax(dateToAdjust)) {
-          if (dateToAdjust.isBefore(this.__minDate())) {
-            return this.__minDate();
-          }
-          else if (dateToAdjust.isAfter(this.__maxDate())) {
-            return this.__maxDate();
-          }
-        } else {
-          return dateToAdjust;
+        if (dateToAdjust.isBefore(this.__minDate())) {
+          return this.__minDate();
         }
+        else if (dateToAdjust.isAfter(this.__maxDate())) {
+          return this.__maxDate();
+        }
+        return dateToAdjust;
       }
 
 
@@ -571,11 +555,11 @@
         if (this.internal_date_value == null) {
           return '';
         }
-        return moment(this.internal_date_value).format("L");
+        return moment(this.internal_date_value).locale(this.locale).format("L");
       }
 
       getLocalizedMonthName(monthNum) {
-        return moment.monthsShort()[monthNum];
+        return capitalize(moment().locale(this.locale).localeData().monthsShort()[monthNum]);
       }
 
       static get properties() {
